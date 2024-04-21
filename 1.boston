@@ -1,0 +1,101 @@
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Input, Activation
+from tensorflow.keras.datasets import boston_housing
+from tensorflow.keras import layers
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+SEED_VALUE = 42
+# Fix seed to make training deterministic.
+np.random.seed(SEED_VALUE)
+tf.random.set_seed(SEED_VALUE)
+
+# Load the Boston housing dataset.
+(X_train, y_train), (X_test, y_test) = boston_housing.load_data()
+print(X_train.shape)
+print("\n")
+print("Input features: ", X_train[0])
+print("\n")
+print("Output target: ", y_train[0])
+
+boston_features = {
+ 'Average Number of Rooms':5,
+}
+X_train_1d = X_train[:, boston_features['Average Number of Rooms']]
+print(X_train_1d.shape)
+X_test_1d = X_test[:, boston_features['Average Number of Rooms']]
+
+plt.figure(figsize=(15, 5))
+plt.xlabel('Average Number of Rooms')
+plt.ylabel('Median Price [$K]')
+plt.grid("on")
+plt.scatter(X_train_1d[:], y_train, color='green', alpha=0.5);
+
+model = Sequential()
+# Define the model consisting of a single neuron.
+model.add(Dense(units=1, input_shape=(1,)))
+# Display a summary of the model architecture.
+model.summary()
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=.005), loss='mse')
+
+history = model.fit(X_train_1d,
+ y_train,
+batch_size=16,
+ epochs=101,
+ validation_split=0.3)
+
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.datasets import boston_housing
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+
+# Define a function to plot the loss
+def plot_loss(history):
+    plt.figure(figsize=(20, 5))
+    plt.plot(history.history['loss'], 'g', label='Training Loss')
+    plt.plot(history.history['val_loss'], 'b', label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+# Plot the loss
+plot_loss(history)
+
+# Predict the median price of a home with [3, 4, 5, 6, 7] rooms
+x = np.array([3, 4, 5, 6, 7]).reshape(-1, 1)
+y_pred = model.predict(x)
+for idx in range(len(x)):
+    print(f"Predicted price of a home with {x[idx][0]} rooms: ${y_pred[idx][0]:.1f}K")
+
+# Generate feature data that spans the range of interest for the independent variable.
+x_range = np.linspace(3, 9, 100).reshape(-1, 1)
+# Use the model to predict the dependent variable.
+y_range_pred = model.predict(x_range)
+
+# Plot the training dataset, test dataset, and the model predictions
+plt.figure(figsize=(15, 5))
+plt.scatter(X_train_1d, y_train, label='Training Data', color='green', alpha=0.5)
+plt.scatter(X_test_1d, y_test, label='Test Data', color='blue', alpha=0.5)
+plt.plot(x_range, y_range_pred, color='red', label='Model Predictions')
+plt.xlabel('Average Number of Rooms')
+plt.ylabel('Price [$K]')
+plt.title('Boston Housing Prices Prediction')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Reshape X_test to match the model's input shape
+X_test_1d = X_test[:, boston_features["Average Number of Rooms"]]
+
+# Evaluate the model
+evaluation_result = model.evaluate(X_test_1d, y_test)
+
+# Print the results
+print("Evaluation result on test data:" , evaluation_result)
