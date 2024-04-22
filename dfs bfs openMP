@@ -2,79 +2,6 @@
 2. g++ -o filename –fopenmp filename.cpp
 3. ./filename
 
-
-CODE 1 (GRAPH) :
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <omp.h>
-using namespace std;
-// Graph class representing the adjacency list
-class Graph {
-  int V; // Number of vertices
-  vector<vector<int>> adj; // Adjacency list
-public:
-G  raph(int V) : V(V), adj(V) {}
-// Add an edge to the graph
-  void addEdge(int v, int w) {
-    adj[v].push_back(w);
-  }
-// Parallel Depth-First Search
-  void parallelDFS(int startVertex) {
-    vector<bool> visited(V, false);
-    parallelDFSUtil(startVertex, visited);
-  }
-// Parallel DFS utility function
-  void parallelDFSUtil(int v, vector<bool>& visited) {
-    visited[v] = true;
-    cout << v << " ";
-#pragma omp parallel for
-    for (int i = 0; i < adj[v].size(); ++i) {
-      int n = adj[v][i];
-      if (!visited[n])
-        parallelDFSUtil(n, visited);
-    }
-  }
-// Parallel Breadth-First Search
-  void parallelBFS(int startVertex) {
-    vector<bool> visited(V, false);
-    queue<int> q;
-    visited[startVertex] = true;
-    q.push(startVertex);
-    while (!q.empty()) {
-      int v = q.front();
-      q.pop();
-      cout << v << " ";
-      #pragma omp parallel for
-      for (int i = 0; i < adj[v].size(); ++i) {
-        int n = adj[v][i];
-        if (!visited[n]) {
-          visited[n] = true;
-          q.push(n);
-        }
-      }
-    }
-  }
-};
-int main() {
-// Create a graph
-  Graph g(6);
-  g.addEdge(0, 1);
-  g.addEdge(1, 2);
-  g.addEdge(1, 3);
-  g.addEdge(2, 4);
-  g.addEdge(4, 5);
-  g.addEdge(5, 3);
-  cout << "Depth-First Search (DFS): ";
-  g.parallelDFS(0);
-  cout << endl;
-  cout << "Breadth-First Search (BFS): ";
-  g.parallelBFS(0);
-  cout << endl;
-  return 0;
-}
-
-
 CODE 2 ( USER INPUT ) (GRAPH) :
 #include <iostream>
 #include <vector>
@@ -149,4 +76,103 @@ int main() {
   g.parallelBFS(0);
   cout << endl;
   return 0;
+}
+
+
+
+
+
+CODE 3 ( GRAPH AND TREE ) :
+DFS
+#include <iostream>
+#include <vector>
+#include <omp.h>
+using namespace std;
+const int MAXN = 1e5;
+vector<int> adj[MAXN + 5]; // adjacency list
+bool visited[MAXN + 5]; // mark visited nodes
+void dfs(int node)
+{
+visited[node] = true;
+cout << node << " "; // Print the visited node here
+#pragma omp parallel for
+for (int i = 0; i < adj[node].size(); i++)
+{
+int next_node = adj[node][i];
+if (!visited[next_node])
+{
+dfs(next_node);
+}
+}
+}
+int main()
+{
+cout << "Please enter nodes and edges: ";
+int n, m; // number of nodes and edges
+cin >> n >> m;
+for (int i = 1; i <= m; i++)
+{
+int u, v; // edge between u and v
+cin >> u >> v;
+adj[u].push_back(v);
+adj[v].push_back(u);
+}
+int start_node; // start node of DFS
+cout << "Enter the start node for DFS: ";
+cin >> start_node;
+dfs(start_node);
+cout << endl; // Print a newline after DFS traversal
+return 0;
+}
+
+
+
+
+------BFS----
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <omp.h>
+using namespace std;
+int main() {
+int num_vertices, num_edges, source;
+cout << "Enter number of vertices, edges, and source node: ";
+cin >> num_vertices >> num_edges >> source;
+// Input validation
+if (source < 1 || source > num_vertices) {
+cout << "Invalid source node!" << endl;
+return 1;
+}
+vector<vector<int>> adj_list(num_vertices + 1);
+for (int i = 0; i < num_edges; i++) {
+int u, v;
+cin >> u >> v;
+// Input validation for edges
+if (u < 1 || u > num_vertices || v < 1 || v > num_vertices) {
+cout << "Invalid edge: " << u << " " << v << endl;
+return 1;
+}
+adj_list[u].push_back(v);
+adj_list[v].push_back(u);
+}
+queue<int> q;
+vector<bool> visited(num_vertices + 1, false);
+q.push(source);
+visited[source] = true;
+while (!q.empty()) {
+int curr_vertex = q.front();
+q.pop();
+cout << curr_vertex << " ";
+// Parallel loop for neighbors
+#pragma omp parallel for
+for (int i = 0; i < adj_list[curr_vertex].size(); i++) {
+int neighbour = adj_list[curr_vertex][i];
+if (!visited[neighbour]) {
+visited[neighbour] = true;
+q.push(neighbour);
+}
+}
+}
+cout << endl;
+return 0;
 }
