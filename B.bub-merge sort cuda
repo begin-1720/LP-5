@@ -76,3 +76,102 @@ int main() {
 
 !nvcc bu.cu -o bu
 ./bu
+
+
+
+
+----merge sort
+
+%%writefile bu.cu
+#include <iostream>
+#include <vector>
+#include <chrono>
+#include <cuda_runtime.h>
+
+using namespace std;
+using namespace std::chrono;
+
+// Device function to merge two sorted subarrays
+__device__ void merge(int *arr, int l, int m, int r) {
+    int n1 = m - l + 1;
+    int n2 = r - m;
+    int *L = new int[n1];
+    int *R = new int[n2];
+    for (int i = 0; i < n1; ++i)
+        L[i] = arr[l + i];
+    for (int j = 0; j < n2; ++j)
+        R[j] = arr[m + 1 + j];
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j])
+            arr[k++] = L[i++];
+        else
+            arr[k++] = R[j++];
+    }
+    while (i < n1)
+        arr[k++] = L[i++];
+    while (j < n2)
+        arr[k++] = R[j++];
+    delete[] L;
+    delete[] R;
+}
+
+// Device function for merge sort
+__device__ void mergeSort(int *arr, int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+        mergeSort(arr, l, m);
+        mergeSort(arr, m + 1, r);
+        merge(arr, l, m, r);
+    }
+}
+
+// Kernel function to launch merge sort on GPU
+__global__ void mergeSortGPU(int *arr, int l, int r) {
+    mergeSort(arr, l, r);
+}
+
+// Host function to initialize array and call GPU merge sort
+void mergeSortHost(int *arr, int n) {
+    int *d_arr;
+    cudaMalloc((void **)&d_arr, n * sizeof(int));
+    cudaMemcpy(d_arr, arr, n * sizeof(int), cudaMemcpyHostToDevice);
+
+    mergeSortGPU<<<1, 1>>>(d_arr, 0, n - 1);
+
+    cudaMemcpy(arr, d_arr, n * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaFree(d_arr);
+}
+
+int main() {
+    int n;
+    cout << "Enter the number of elements: ";
+    cin >> n;
+
+    // Create vector to store user input
+    vector<int> arr(n);
+    cout << "Enter " << n << " elements:\n";
+    for (int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+
+    // Display unsorted array
+    cout << "Unsorted array:\n";
+    for (int i = 0; i < n; ++i)
+        cout << arr[i] << " ";
+    cout << endl;
+
+    // Sort array using CUDA merge sort
+    mergeSortHost(&arr[0], n);
+
+    // Display sorted array
+    cout << "Sorted array:\n";
+    for (int i = 0; i < n; ++i)
+        cout << arr[i] << " ";
+    cout << endl;
+
+    return 0;
+}
+
+
+
