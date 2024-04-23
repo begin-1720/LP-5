@@ -51,6 +51,10 @@ plt.xlabel("Time (oldest -> latest)")
 plt.ylabel("Stock Lowest Price")
 plt.show()
 
+
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense, LSTM, Dropout
+
 regressor = Sequential()
 #add 1st lstm layer
 regressor.add(LSTM(units = 50, return_sequences = True, input_shape = (X_train.shape[1], 1)))
@@ -117,3 +121,9 @@ plt.xlabel('Time')
 plt.ylabel('Price')
 plt.legend()
 plt.show()
+
+
+from sklearn.metrics import mean_squared_error 
+
+ 
+mean_squared_error(real_stock_price,predicted_stock_price) 
